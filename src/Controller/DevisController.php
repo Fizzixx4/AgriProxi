@@ -16,9 +16,9 @@ class DevisController extends AbstractController
 {
     //affichage page devis
     #[Route('/devis', name: 'app_devis')]
-    public function index(LigneDevisRepository $ligneRepo): Response
+    public function index(LigneDevisRepository $ligneRepo): Response {
+    $user = $this->getUser(); //user connecté
     {
-        $user = $this->getUser(); //user connecté
         $entreprise = $user->getEntreprise(); //entreprise de user
         $id_entreprise = $entreprise->getId(); // id de l'entreprise de user
         $type = $entreprise->getTypeEntreprise(); //type d'entreprise
@@ -74,7 +74,7 @@ class DevisController extends AbstractController
     }
 
     //Restaurateur : ajouter un produit d'un producteur à sa liste de commande
-    #[Route('/devis/add/{id}', name: 'add_devis')]
+    #[Route('/devis/add/{id}', name: 'add_devis')] {
     public function addProductDevis($id, ProduitRepository $produitRepo, DevisRepository $devisRepo, LigneDevisRepository $ligneRepo)
     {
         // Je récupère le produit à ajouter au panier

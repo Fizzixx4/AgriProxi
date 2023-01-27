@@ -329,6 +329,13 @@ nav>ul li:hover .sub-menu {
 }
 
 /* ------------------ REPONSIVE ------------------ */
+
+@media (min-width: 1400px) {
+    .card_img_1 {
+        width: 40%;
+    }
+}
+
 @media (max-width: 1250px) {
 
     //CARDS
