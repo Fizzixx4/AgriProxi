@@ -20,7 +20,7 @@ class ProduitController extends AbstractController
 {
 
     /**
-     * retourne la vue de la page de recherche de produits avec la carte
+     * retourne la vue de la page de recherche de produits avec la carte, et donne les coordonnée de la premiere adresse de l'utilisateur. si il n'a pas d'adresse, on donne les coordonnées de la france.
      *
      * @param ProduitRepository $produitRepo
      * @param SousCategorieRepository $subCategorieRepo
@@ -29,33 +29,37 @@ class ProduitController extends AbstractController
      * @return Response
      */
     #[Route('/produit', name: 'app_produit')]
-    public function map(CategorieRepository $categorieRepo, Request $request): Response
+    public function map(CategorieRepository $categorieRepo): Response
     {
         $userAdresses = $this->getUser()->getEntreprise()->getAdresses();
-        $latitude = $userAdresses[0]->getLatitude();
-        $longitude = $userAdresses[0]->getLongitude();
-        $zoomLevel = $this->getRadius($request->get("rayon", ''));
-
-        return $this->render('produit/map.html.twig', [
-            'controller_name' => 'ProduitController',
-            'categories' => $categorieRepo->findAll(),
-            'adresses' => $userAdresses,
-            'latitude' => $latitude,
-            'longitude' => $longitude,
-            'zoomLevel' => $zoomLevel,
-        ]);
+        if (count($userAdresses) > 0) {
+            $latitude = $userAdresses[0]->getLatitude();
+            $longitude = $userAdresses[0]->getLongitude();
+    
+            return $this->render('produit/map.html.twig', [
+                'controller_name' => 'ProduitController',
+                'categories' => $categorieRepo->findAll(),
+                'adresses' => $userAdresses,
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+            ]);
+        } else {
+            return $this->redirectToRoute('app_user', [
+                'message' => '5'
+            ]);
+        }
     }
 
 
     /**
-     * Renvoie un tableau:  
-     * idCategorie => [[idSubCat1, nomSubCat1],[..],..] 
+     * Renvoie un json contenant les infos d'une adresse à partir d'un id d'adresse. 
      * 
      * @param Request $request
-     * @return JsonResponse
+     * @param AdresseRepository $adresseRepo
+     * @return JsonResponse 
      */
     #[Route('/produit/ajax/adresse/{idAdresse}', name: 'ajax_adresse')]
-    public function ajaxAdresse(Request $request, AdresseRepository $adresseRepo)
+    public function ajaxAdresse(Request $request, AdresseRepository $adresseRepo): JsonResponse
     {
         if (isset($request->request)) {
             $idAdresse = $request->get('idAdresse');
@@ -83,11 +87,11 @@ class ProduitController extends AbstractController
     }
 
     /**
-     * Renvoie un tableau:  
-     * idCategorie => [[idSubCat1, nomSubCat1],[..],..] 
+     * Renvoie un json contenant l'id et le nom de sous-categories correspondant à un id de categorie 
      * 
      * @param Request $request
-     * @return JsonResponse
+     * @param SousCategorieRepository $subCatRepo
+     * @return JsonResponse 
      */
     #[Route('/produit/ajax/subcat/{idCat}', name: 'ajax_subcat')]
     public function ajaxSubCat(Request $request, SousCategorieRepository $subCatRepo)
@@ -116,15 +120,14 @@ class ProduitController extends AbstractController
     }
 
     /**
-     * Renvoie un tableau:  
-     * idCategorie |idSousCategorie => [[idProduit1, nomProduit1, descriptionProduit1, inStockProduit1, imageProduit1, idEntrepriseProduit1, nomEntrepriseProduit1, idAdresseEntrepriseProduit1, labelAdresseEntrepriseProduit1, codePostalAdresseEntrepriseProduit1, latitudeEntrepriseProduit1, longitudeEntrepriseProduit1, IdVilleAdresseEntrepriseProduit1, nomVilleAdresseEntrepriseProduit1, idDepartementVilleAdresseEntrepriseProduit1, codeDepartementVilleAdresseEntrepriseProduit1, codeDepartementVilleAdresseEntrepriseProduit1],[..],..]
-     * idCategorie |idSousCategorie => [[idProduit1, nomProduit1, descriptionProduit1, inStockProduit1, imageProduit1, idEntrepriseProduit1, nomEntrepriseProduit1, idAdresseEntrepriseProduit1, labelAdresseEntrepriseProduit1, codePostalAdresseEntrepriseProduit1, latitudeEntrepriseProduit1, longitudeEntrepriseProduit1, IdVilleAdresseEntrepriseProduit1, nomVilleAdresseEntrepriseProduit1, idDepartementVilleAdresseEntrepriseProduit1, codeDepartementVilleAdresseEntrepriseProduit1, codeDepartementVilleAdresseEntrepriseProduit1],[..],..]
+     * Renvoie un json contenant toute les informations accessible dans la base de donnée sur des produit correspondant soit a un id de categorie, soit a un id de sous-categorie.
      * 
+     * @param ProduitRepository $produitRepo
      * @param Request $request
-     * @return ?
+     * @return JsonResponse 
      */
     #[Route('/produit/ajax/produitcat/{idCat}/produitsubcat/{idSubCat}', name: 'ajax_produit')]
-    public function ajaxProduit(Request $request, ProduitRepository $produitRepo)
+    public function ajaxProduit(Request $request, ProduitRepository $produitRepo): JsonResponse
     {
         if (isset($request->request)) {
             $idCat = $request->get('idCat');
@@ -157,7 +160,14 @@ class ProduitController extends AbstractController
         );
     }
 
-    public function templateJsonProduit($produits)
+
+    /**
+     * renvoi un tableau associatif a partir d'une collection de produits
+     *
+     * @param Produit[] $produits
+     * @return array
+     */
+    public function templateJsonProduit(array $produits): array
     {
         $json = [];
         foreach ($produits as $produit) {
@@ -201,12 +211,12 @@ class ProduitController extends AbstractController
 
 
     /**
-     * Retourne un tableau contenant les coordonée, le nom, l'adresse et l'Id d'une entreprise, filtrés par produits
+     * Retourne un tableau contenant les coordonée, le nom, l'adresse et l'Id d'une entreprise, sans doublon d'entreprise, a partir d'une collection de produits
      * 
      * @param Produit[] $produits
      * @return array[] 
      */
-    public function getCoordinatesEntreprises(array $produits)
+    public function getCoordinatesEntreprises(array $produits): array
     {
         $entreprises = [];
         foreach ($produits as $produit) {
@@ -253,32 +263,6 @@ class ProduitController extends AbstractController
     }
 
     /**
-     * retourne la valeur de zoom en décimale pour leaflet a partir du choix de rayon de recherche
-     * 
-     * @param string
-     * @return int 
-     */
-    public function getRadius(string $rayon)
-    {
-        switch ($rayon) {
-            case '10':
-                return 12;
-                break;
-            case '25':
-                return 11;
-                break;
-            case '50':
-                return 10;
-                break;
-            case '100':
-                return 9;
-                break;
-            default:
-                return 7;
-        }
-    }
-
-    /**
      * Retourne un tableau de produits, filtrés par categories ou sous-categories
      *
      * @param string $subCatId
@@ -286,7 +270,7 @@ class ProduitController extends AbstractController
      * @param ProduitRepository $produitRepo
      * @return Produit[] 
      */
-    public function searchByCategorieOrSubCategorie(string $subCatId, string $catId, ProduitRepository $produitRepo)
+    public function searchByCategorieOrSubCategorie(string $subCatId, string $catId, ProduitRepository $produitRepo): array
     {
         if (!isset($_GET['subCategorie']) || $_GET['subCategorie'] === '') {
             return $produitRepo->findByCategorie($catId);
@@ -334,6 +318,11 @@ class ProduitController extends AbstractController
         $user = $this->getUser();
         $entreprise = $user->getEntreprise();
         if ($form->isSubmitted() && $form->isValid()) {
+            //En cas de modification vérifie si une image existe et la supprime
+            if(isset($_POST['produit_creation_form[imageURL]']) && $_POST['produit_creation_form[imageURL]'] !== ''){
+                $this->deleteImage($produit, $photoDir);
+            }
+            //Gestion de l'image pour la créer dans un dossier
             if ($photo = $form['imageURL']->getData()) {
                 $filename = '/uploads/photos/' . bin2hex(random_bytes(6)) . '.' . $photo->guessExtension();
                 try {
@@ -345,6 +334,7 @@ class ProduitController extends AbstractController
             }
             $produit->setEntreprise($entreprise);
             $produitRepo->save($produit, true);
+            //Gestion des messages de validation
             if ($request->get('id')) {
                 $message = '1';
             } else {
@@ -382,11 +372,26 @@ class ProduitController extends AbstractController
 
     //Suppression d'un produit
     #[Route('/delete_produit/{id}', name: 'deleteProduit')]
-    public function deleteProduit(Produit $produit, ProduitRepository $produitRepo): Response
+    public function deleteProduit(Produit $produit, ProduitRepository $produitRepo, #[Autowire('%photo_dir%')] string $photoDir): Response
     {
+        //Check si l'image existe et la supprime
+        $this->deleteImage($produit, $photoDir);
         $produitRepo->remove($produit, true);
         return $this->redirectToRoute('maBoutique', [
             'message' => '2',
         ]);
+    }
+
+    /**
+     * Fonction qui vérifie si une image existe sur le produit et la supprime
+     */
+    private function deleteImage(Produit $produit, #[Autowire('%photo_dir%')] string $photoDir)
+    {
+        $imageUrl = $produit->getImageURL();
+        if ($imageUrl !== null || $imageUrl === '') {
+            $imageUrl = explode('/', $imageUrl);
+            $image = $imageUrl[count($imageUrl) - 1];
+            unlink($photoDir . '/' . $image);
+        }
     }
 }

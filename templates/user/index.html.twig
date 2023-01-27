@@ -13,46 +13,38 @@
 {% block title %}Agriproxi | Espace personnel{% endblock %}
 
 {% block body %}
-    <div id="user_container">
-        <h1>Votre espace personnel</h1>
+    <h1>Votre espace personnel</h1>
 
-        <div class="message">
-            <p>{{ message }}</p>
-        </div>
-        
-        <div class="cards">
-            <div class="card_contain">
-                <div class="head_card"> 
-                    <h2>Espace utilisateur</h2>
+    <div class="message">
+        <p>{{ message }}</p>
+    </div>
+
+    {# BLOC : CARD ESPACE UTLISATEUR + ADRESSE #}
+    <div class="cards">
+        {# BLOC : ESPACE UTILISATEUR #}
+        <div class="card_contain">
+            <div class="head_card"> 
+                <h2>Espace utilisateur</h2>
+                <div class="bloc_icon_user">
                     <a href="{{path('updateUser',{ id: user.id })}}"><ion-icon name="settings-sharp" class='btn_icon'></ion-icon></a>
-                    <a href="{{path('deleteUser',{ id: user.id })}}"><ion-icon name="trash-sharp" class='btn_icon'></ion-icon></a>
-                </div>
-                <div class="card_content">
-                    <ul>
-                        <li><span class="bold">Nom:</span> {{ user.lastName }}</li>
-                        <li><span class="bold">Prénom:</span> {{ user.firstName }}</li>
-                        <li><span class="bold">Email:</span> {{ user.email }}</li>
-                    </ul>
+                    <button class="mybtn_user link" data-href="{{path('deleteUser',{ id: user.id })}}" href="">
+                            <ion-icon name="trash-sharp" class='btn_icon'></ion-icon>
+                    </button>
                 </div>
             </div>
-            <div class="card_contain card_contain--Secondary">
-                <div class="head_card">
-                    <h2>Espace entreprise</h2>
-                    <a class="" href="{{path('updateEntreprise',{ id: entreprise.id })}}"><ion-icon name="settings-sharp" class='btn_icon'></ion-icon></a>
-                </div>
-                <div class="card_content card_content_user">
-                    <ul>
-                        <li><span class="bold">Nom:</span> {{ entreprise.name }}</li>
-                        <li><span class="bold">Type d'entreprise:</span> {{ typeEntreprise.name }}</li>
-                        <li><span class="bold">Descritpion:</span> {{ entreprise.description }}</li>
-                    </ul>
-                </div>
+            <div class="card_content">
+                <ul>
+                    <li><span class="bold">Nom:</span> {{ user.lastName }}</li>
+                    <li><span class="bold">Prénom:</span> {{ user.firstName }}</li>
+                    <li><span class="bold">Email:</span> {{ user.email }}</li>
+                </ul>
             </div>
         </div>
-        <div class="card_contain card_contain_adress">
+
+        {# BLOC : ADRESSE  #}
+        <div class="card_contain card_contain--Secondary">
             <div class="head_card">
                 <h2>{{ (adresses|length == 1) ? 'Mon adresse' : "Mon carnet d'adresse" }}</h2>
-                
                 <a href="{{path('createAdresse')}}"><ion-icon name="add-circle-sharp" class='btn_icon'></ion-icon></a>
             </div>
             <div class="card_content card_content_user">
@@ -66,7 +58,9 @@
                         </div>
                         <ul>
                             <li><span class="bold">Label:</span> {{ adresse.label }}</li>
-                            <li><span class="bold">Complément:</span> {{ adresse.complement }}</li>
+                            {% if adresse.complement %}
+                                <li><span class="bold">Complément:</span> {{ adresse.complement }}</li>
+                            {% endif %}
                             <li><span class="bold">Code Postal:</span> {{ adresse.zipCode }}</li>
                             <li><span class="bold">Ville:</span> {{ adresse.ville }}</li>
                         </ul>
@@ -75,12 +69,42 @@
             </div>
         </div>
     </div>
-    {# MODAL DELETE #}
+
+    {# BLOC ESPACE ENTREPRISE  #}
+    <div class="card_contain card_contain_adress">
+        <div class="head_card">
+            <h2>Espace entreprise</h2>
+            <a class="" href="{{path('updateEntreprise',{ id: entreprise.id })}}"><ion-icon name="settings-sharp" class='btn_icon'></ion-icon></a>
+        </div>
+        <div class="card_content card_content_user">
+            <ul>
+                <li><span class="bold">Nom:</span> {{ entreprise.name }}</li>
+                <li><span class="bold">Type d'entreprise:</span> {{ typeEntreprise.name }}</li>
+                <li><span class="bold">Descritpion:</span> {{ entreprise.description }}</li>
+            </ul>
+        </div>
+    </div>
+
+    {# DECONEXION #}
+    <div class="mobil_deco">
+        <a aria-current="page" class="message red" href="{{path('app_logout')}}">Déconnexion</a>
+    </div>
+
+    {# MODAL DELETE ADRESSE #}
     <div class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
             <h3>Etes vous sur de vouloir supprimer cette adresse ?</h3>
-            <a class="red bloc_icon" id="link_del" href="">Supprimer<ion-icon name="close-circle-sharp" class="produit_icon"></ion-icon></a>
+            <a class="red bloc_icon" id="link_del" href="#"> Supprimer <ion-icon name="close-circle-sharp" class="produit_icon"></ion-icon></ion-icon></a>
+        </div>
+    </div>
+
+    {# MODAL DELETE USER #}
+    <div class="modal_user">
+        <div class="modal-content">
+            <span class="close close_user">&times;</span>
+            <h3 id="h3_user">Etes vous sur de vouloir supprimer cet utilisateur ? Tout ce qui est en lien avec ce dernier sera supprimé (Entreprise, adresses, produits, devis etc...)</h3>
+            <a class="red bloc_icon" id="link_del_user" href="#"> Supprimer <ion-icon name="close-circle-sharp" class="produit_icon"></ion-icon></ion-icon></a>
         </div>
     </div>
 {% endblock %}

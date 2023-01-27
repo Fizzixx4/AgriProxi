@@ -3,6 +3,10 @@
 	<head>
 		<meta charset="UTF-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="author" content="Justine Ragues, Grégory Koch, Nicolas Soulay">
+		<meta name="description" content="Site de mise en relation entre producteurs et restaurateurs">
+		<meta name="keywords" content="symfony, agriculture, bio, producteur, restaurateur">
+
 		<title>
 			{% block title %}Welcome!{% endblock %}
 		</title>
@@ -35,26 +39,30 @@
 			<!-- LIST MENU -->
 			<ul class="navlist">
 				<li class="nav_item">
-					<a aria-current="page" href="{{path('app_home')}}">Qui sommes nous ?</a>
+					<a aria-current="page" href="{{path('app_home')}}">accueil</a>
 				</li>
-				{% if app.user %}
-				<li class="nav_item">
-					<a aria-current="page" href="{{path('app_produit')}}">Nos producteurs</a>
-				</li>
+				{% if app.user and is_granted("ROLE_CLIENT") %}
+					<li class="nav_item">
+						<a aria-current="page" href="{{path('app_produit')}}">Nos producteurs</a>
+					</li>
 				{% endif %}
-				{# CONNEXION / DECONNEXION ACCEES ESPACE PERSO #}
+				{% if app.user and is_granted("ROLE_PRODUCTEUR") %}
+					<li class="nav_item">
+						<a aria-current="page" href="{{path('maBoutique')}}">Ma boutique</a>
+					</li>
+				{% endif %}				
+				{% if app.user %}
+					<li class="nav_item">
+						<a aria-current="page" href="{{path('app_devis')}}">Mes commandes</a>
+					</li>
+				{% endif %}
+				{# CONNEXION / DECONNEXION ACCES ESPACE PERSO #}
 				{% if app.user %}
 					<li class="nav_item nav_item--Secondary">
-						<a aria-current="page" href="#">Mon compte</a>
+						<a aria-current="page" href="{{path('app_user')}}">Mon compte</a>
 						<ul class="sub-menu">
 							<li class="sub_item">
 								<a aria-current="page" href="{{path('app_user')}}">Mes informations</a>
-							</li>
-							<li class="sub_item">
-								<a aria-current="page" href="{{path('maBoutique')}}">Ma boutique</a>
-							</li>
-							<li class="sub_item">
-								<a aria-current="page" href="{{path('app_devis')}}">Appel d'offre</a>
 							</li>
 							<li class="sub_item">
 								<a aria-current="page" href="{{path('app_logout')}}">Déconnexion</a>
@@ -64,25 +72,39 @@
 					<li class="nav_item logout">
 						<a aria-current="page" href="{{path('app_logout')}}">Déconnexion</a>
 					</li>
-					{% else %}
+				{% else %}
 					<li class="nav_item nav_item--Secondary">
 						<a aria-current="page" href="{{path('app_login')}}">Connexion</a>
 					</li>
 				{% endif %}
 			</ul>
 		</nav>
-		<div id="slider">
-			<img src="{{ asset('build/images/s1.png') }}" alt="" id="slide" class="img_slide"/>
-			<div id="precedent">
-				<ion-icon name="chevron-back-outline"></ion-icon>
-			</div>
-			<div id="suivant">
-				<ion-icon name="chevron-forward-outline"></ion-icon>
-			</div>
-		</div>
+		{# HEADER #}
+		<header>
+			<div class="slider">
+				<div class="slide">
+					<img src="{{ asset('build/images/a.png') }}" alt="Slide 1">
+					<p class="banner_title">Une livraison de produits frais et engagés :</p>
+				</div>
+				<div class="slide">
+					<img src="{{ asset('build/images/b.png') }}" alt="Slide 2">
+					<p class="banner_title">Un choix assumé pour les circuits-courts et nos producteurs,</p>
+				</div>
+				<div class="slide">
+					<img src="{{ asset('build/images/c.png') }}" alt="Slide 3">
+					<p class="banner_title">un approvisionnement local et personnalisé selon votre région,</p>
+				</div>
+				<div class="slide">
+					<img src="{{ asset('build/images/d.png') }}" alt="Slide 3">
+					<p class="banner_title">et des produits toujours de saison et cueillis à maturité !</p>
+				</div>
+			</div>	
+		</header>
+		{# MAIN	 #}
 		<main>
 			{% block body %}{% endblock %}
 		</main>
+		{# FOOTER  #}
 		<footer>
 			<img src="{{ asset('build/images/footer.png') }}" class="footer_img">
 			<!-- BLOC GAUCHE -->
@@ -128,7 +150,7 @@
 			<!-- BLOC DROIT -->
 			<div class="footer_block">
 				<p class="footer_p">ⓒagriproxi 2022.</p>
-				<a href="./mention legale.html" id="footer_link" class="footer_p">mentions légales</a>
+				<a href="{{path('mentions_legale')}}" id="footer_link" class="footer_p">mentions légales</a>
 			</div>
 		</footer>
 	</body>
